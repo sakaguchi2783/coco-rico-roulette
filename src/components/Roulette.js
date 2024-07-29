@@ -138,6 +138,13 @@ const Roulette = () => {
     return Math.floor(diff / 1000);
   };
 
+  const isSpecialDate = () => {
+    const now = new Date();
+    const month = now.getMonth() + 1; // 月は0から始まるので1を足す
+    const date = now.getDate();
+    return month === 7 && date === 31; // 7月31日であることを確認
+  };
+
   const spinRoulette = async () => {
     setSpinning(true);
     const spinAngle = Math.random() * 3600 + 3600; // 10回転以上
@@ -160,11 +167,13 @@ const Roulette = () => {
         const correctedAngle = (360 - finalAngle + (sectorAngle / 2)) % 360;
         let resultIndex = Math.floor(correctedAngle / sectorAngle);
 
-        // 50回転目には必ず当たりを出す
-        if (consecutiveDaysRef.current + 1 === 50) {
+        if (isSpecialDate()) {
+          // 特定の日付には必ず当たりを出す
           resultIndex = sectors.findIndex(sector => sector.label !== 'ハズレ');
           setCouponMessage('クーポンコード <span class="coupon-code">000000</span><br><span class="coupon-message">このクーポンコードを忘れずに保管してね♥</span>');
         } else {
+          // 特定の日付以外は必ずハズレにする
+          resultIndex = sectors.findIndex(sector => sector.label === 'ハズレ');
           setCouponMessage('');
         }
 
