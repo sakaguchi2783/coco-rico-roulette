@@ -158,7 +158,7 @@ const Roulette = () => {
         const finalAngle = (angle % 360);
         const sectorAngle = 360 / sectors.length;
         const correctedAngle = (360 - finalAngle + (sectorAngle / 2)) % 360;
-        const resultIndex = Math.floor(correctedAngle / sectorAngle);
+        let resultIndex = Math.floor(correctedAngle / sectorAngle);
 
         // 50回転目には必ず当たりを出す
         if (consecutiveDaysRef.current + 1 === 50) {
