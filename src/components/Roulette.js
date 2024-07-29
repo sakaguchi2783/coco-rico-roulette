@@ -2,17 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './Roulette.css';
 import { v4 as uuidv4 } from 'uuid';
 
-// sectors 配列を最初に宣言
-const sectors = [
-  ...Array(5).fill({ label: '¥500 OFF', color: '#000000', textColor: '#FFFFFF' }),
-  ...Array(5).fill({ label: '¥1000 OFF', color: '#000000', textColor: '#FFFFFF' }),
-  ...Array(20).fill().map((_, i) => ({
-    label: 'ハズレ',
-    color: i % 3 === 0 ? '#D3D3D3' : (i % 3 === 1 ? '#FFFFFF' : '#D3D3D3'),
-    textColor: '#000000'
-  }))
-];
-
 const shuffleArray = (array) => {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -21,7 +10,16 @@ const shuffleArray = (array) => {
   return array;
 };
 
-const shuffledSectors = shuffleArray(sectors);
+// sectors 配列を最初に宣言し、初期化時に一度だけシャッフル
+const sectors = shuffleArray([
+  ...Array(5).fill({ label: '¥500 OFF', color: '#000000', textColor: '#FFFFFF' }),
+  ...Array(5).fill({ label: '¥1000 OFF', color: '#000000', textColor: '#FFFFFF' }),
+  ...Array(20).fill().map((_, i) => ({
+    label: 'ハズレ',
+    color: i % 3 === 0 ? '#D3D3D3' : (i % 3 === 1 ? '#FFFFFF' : '#D3D3D3'),
+    textColor: '#000000'
+  }))
+]);
 
 const Roulette = () => {
   const [result, setResult] = useState('');
@@ -40,13 +38,13 @@ const Roulette = () => {
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
     const radius = Math.min(centerX, centerY) - 20; // 半径を小さくして外枠を広げる
-    const angleStep = (2 * Math.PI) / shuffledSectors.length;
+    const angleStep = (2 * Math.PI) / sectors.length;
 
     // キャンバスをクリア
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // ルーレットを描画
-    shuffledSectors.forEach((sector, index) => {
+    sectors.forEach((sector, index) => {
       ctx.beginPath();
       ctx.moveTo(centerX, centerY);
       ctx.arc(centerX, centerY, radius, index * angleStep, (index + 1) * angleStep);
@@ -158,17 +156,17 @@ const Roulette = () => {
       } else {
         setSpinning(false);
         const finalAngle = (angle % 360);
-        let resultIndex = Math.floor(((finalAngle / 360) * shuffledSectors.length));
+        let resultIndex = Math.floor(((finalAngle / 360) * sectors.length));
 
         // 50回転目には必ず当たりを出す
         if (consecutiveDaysRef.current + 1 === 50) {
-          resultIndex = shuffledSectors.findIndex(sector => sector.label !== 'ハズレ');
+          resultIndex = sectors.findIndex(sector => sector.label !== 'ハズレ');
           setCouponMessage('クーポンコード <span class="coupon-code">000000</span><br><span class="coupon-message">このクーポンコードを忘れずに保管してね♥</span>');
         } else {
           setCouponMessage('');
         }
 
-        const sector = shuffledSectors[resultIndex]; // ルーレットの結果を正しく取得
+        const sector = sectors[resultIndex]; // ルーレットの結果を正しく取得
         setResult(sector.label);
         arrowAngleRef.current = finalAngle;
         setCanSpin(false);
