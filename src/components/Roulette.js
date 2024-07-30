@@ -1,25 +1,40 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './Roulette.css';
 import { v4 as uuidv4 } from 'uuid';
+import { supabase } from '../supabaseClient';
 
-const shuffleArray = (array) => {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-  return array;
-};
-
-// sectors 配列を最初に宣言し、初期化時に一度だけシャッフル
-const sectors = shuffleArray([
-  ...Array(5).fill({ label: '¥500 OFF', color: '#000000', textColor: '#FFFFFF' }),
-  ...Array(5).fill({ label: '¥1000 OFF', color: '#000000', textColor: '#FFFFFF' }),
-  ...Array(20).fill().map((_, i) => ({
-    label: 'ハズレ',
-    color: i % 3 === 0 ? '#D3D3D3' : (i % 3 === 1 ? '#FFFFFF' : '#D3D3D3'),
-    textColor: '#000000'
-  }))
-]);
+const sectors = [
+  { label: '¥500 OFF', color: '#000000', textColor: '#FFFFFF' },
+  { label: 'ハズレ', color: '#D3D3D3', textColor: '#000000' },
+  { label: '¥1000 OFF', color: '#000000', textColor: '#FFFFFF' },
+  { label: 'ハズレ', color: '#FFFFFF', textColor: '#000000' },
+  { label: 'ハズレ', color: '#D3D3D3', textColor: '#000000' },
+  { label: '¥500 OFF', color: '#000000', textColor: '#FFFFFF' },
+  { label: 'ハズレ', color: '#FFFFFF', textColor: '#000000' },
+  { label: '¥1000 OFF', color: '#000000', textColor: '#FFFFFF' },
+  { label: 'ハズレ', color: '#D3D3D3', textColor: '#000000' },
+  { label: 'ハズレ', color: '#FFFFFF', textColor: '#000000' },
+  { label: '¥500 OFF', color: '#000000', textColor: '#FFFFFF' },
+  { label: 'ハズレ', color: '#D3D3D3', textColor: '#000000' },
+  { label: '¥1000 OFF', color: '#000000', textColor: '#FFFFFF' },
+  { label: 'ハズレ', color: '#FFFFFF', textColor: '#000000' },
+  { label: 'ハズレ', color: '#D3D3D3', textColor: '#000000' },
+  { label: '¥500 OFF', color: '#000000', textColor: '#FFFFFF' },
+  { label: 'ハズレ', color: '#FFFFFF', textColor: '#000000' },
+  { label: '¥1000 OFF', color: '#000000', textColor: '#FFFFFF' },
+  { label: 'ハズレ', color: '#D3D3D3', textColor: '#000000' },
+  { label: 'ハズレ', color: '#FFFFFF', textColor: '#000000' },
+  { label: '¥500 OFF', color: '#000000', textColor: '#FFFFFF' },
+  { label: 'ハズレ', color: '#D3D3D3', textColor: '#000000' },
+  { label: '¥1000 OFF', color: '#000000', textColor: '#FFFFFF' },
+  { label: 'ハズレ', color: '#FFFFFF', textColor: '#000000' },
+  { label: 'ハズレ', color: '#D3D3D3', textColor: '#000000' },
+  { label: '¥500 OFF', color: '#000000', textColor: '#FFFFFF' },
+  { label: 'ハズレ', color: '#FFFFFF', textColor: '#000000' },
+  { label: '¥1000 OFF', color: '#000000', textColor: '#FFFFFF' },
+  { label: 'ハズレ', color: '#D3D3D3', textColor: '#000000' },
+  { label: 'ハズレ', color: '#FFFFFF', textColor: '#000000' }
+];
 
 const Roulette = () => {
   const [result, setResult] = useState('');
@@ -28,22 +43,20 @@ const Roulette = () => {
   const [timeLeft, setTimeLeft] = useState(0);
   const canvasRef = useRef(null);
   const arrowAngleRef = useRef(0);
-  const spinCountRef = useRef(0); // 回転数を追跡するためのRef
-  const consecutiveDaysRef = useRef(0); // 連続回転数を追跡するためのRef
-  const [couponMessage, setCouponMessage] = useState(''); // クーポンメッセージ用のステート
+  const userIdRef = useRef(localStorage.getItem('userId') || uuidv4());
+  const spinCountRef = useRef(0);
+  const [couponMessage, setCouponMessage] = useState('');
 
   const drawRoulette = useCallback((angle = 0) => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
-    const radius = Math.min(centerX, centerY) - 20; // 半径を小さくして外枠を広げる
+    const radius = Math.min(centerX, centerY) - 20;
     const angleStep = (2 * Math.PI) / sectors.length;
 
-    // キャンバスをクリア
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // ルーレットを描画
     sectors.forEach((sector, index) => {
       ctx.beginPath();
       ctx.moveTo(centerX, centerY);
@@ -62,7 +75,6 @@ const Roulette = () => {
       ctx.restore();
     });
 
-    // ルーレットの指針を描画
     ctx.save();
     ctx.translate(centerX, centerY);
     ctx.rotate((angle * Math.PI) / 180);
@@ -76,50 +88,54 @@ const Roulette = () => {
     ctx.fill();
     ctx.restore();
 
-    // 最後の赤い矢印の角度を保存
     arrowAngleRef.current = angle;
   }, []);
 
   useEffect(() => {
-    let userId = localStorage.getItem('userId');
-    if (!userId) {
-      userId = uuidv4();
-      localStorage.setItem('userId', userId);
-    }
+    const userId = userIdRef.current;
+    localStorage.setItem('userId', userId);
 
-    let spinCount = localStorage.getItem('spinCount');
-    if (!spinCount) {
-      spinCount = 0;
-      localStorage.setItem('spinCount', spinCount);
-    } else {
-      spinCountRef.current = parseInt(spinCount, 10);
-    }
+    const fetchUserData = async () => {
+      let { data: userData, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
 
-    let consecutiveDays = localStorage.getItem('consecutiveDays');
-    if (!consecutiveDays) {
-      consecutiveDays = 0;
-      localStorage.setItem('consecutiveDays', consecutiveDays);
-    } else {
-      consecutiveDaysRef.current = parseInt(consecutiveDays, 10);
-    }
-
-    const lastSpinTime = localStorage.getItem('lastSpinTime');
-    if (lastSpinTime) {
-      const now = new Date();
-      const lastSpinDate = new Date(lastSpinTime);
-      const diff = now - lastSpinDate;
-      const hoursSinceLastSpin = Math.floor(diff / (1000 * 60 * 60));
-
-      if (hoursSinceLastSpin < 24) {
-        setCanSpin(false);
-        setTimeLeft(calculateTimeLeftUntilMidnight());
-      } else if (hoursSinceLastSpin >= 48) {
-        // 2日以上空いている場合は連続回転数をリセット
-        consecutiveDaysRef.current = 0;
-        localStorage.setItem('consecutiveDays', consecutiveDaysRef.current);
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching user data:', error);
+        return;
       }
-    }
 
+      if (!userData) {
+        const { data, error: insertError } = await supabase
+          .from('users')
+          .insert({ id: userId, last_spin: null, spin_count: 0 })
+          .single();
+
+        if (insertError) {
+          console.error('Error inserting new user:', insertError);
+          return;
+        }
+
+        userData = data;
+      }
+
+      spinCountRef.current = userData.spin_count;
+
+      if (userData.last_spin) {
+        const lastSpinDate = new Date(userData.last_spin);
+        const now = new Date();
+        const hoursSinceLastSpin = Math.floor((now - lastSpinDate) / (1000 * 60 * 60));
+
+        if (hoursSinceLastSpin < 24) {
+          setCanSpin(false);
+          setTimeLeft(calculateTimeLeftUntilMidnight());
+        }
+      }
+    };
+
+    fetchUserData();
     drawRoulette(arrowAngleRef.current);
     const interval = setInterval(() => {
       if (!canSpin) {
@@ -132,26 +148,25 @@ const Roulette = () => {
   const calculateTimeLeftUntilMidnight = () => {
     const now = new Date();
     const midnight = new Date();
-    midnight.setHours(24, 0, 0, 0); // 日本時間の0時に設定
-
+    midnight.setHours(24, 0, 0, 0);
     const diff = midnight - now;
     return Math.floor(diff / 1000);
   };
 
   const isSpecialDate = () => {
     const now = new Date();
-    const month = now.getMonth() + 1; // 月は0から始まるので1を足す
+    const month = now.getMonth() + 1;
     const date = now.getDate();
-    return month === 7 && date === 31; // 7月31日であることを確認
+    return month === 8 && date === 1;
   };
 
   const spinRoulette = async () => {
     setSpinning(true);
-    const spinAngle = Math.random() * 3600 + 3600; // 10回転以上
-    const duration = 6000; // 6秒
+    const spinAngle = Math.random() * 3600 + 3600;
+    const duration = 6000;
     let start = null;
 
-    const step = (timestamp) => {
+    const step = async (timestamp) => {
       if (!start) start = timestamp;
       const progress = timestamp - start;
       const angle = easeOutCubic(progress, 0, spinAngle, duration);
@@ -168,25 +183,36 @@ const Roulette = () => {
         let resultIndex = Math.floor(correctedAngle / sectorAngle);
 
         if (isSpecialDate()) {
-          // 特定の日付には必ず当たりを出す
           resultIndex = sectors.findIndex(sector => sector.label !== 'ハズレ');
-          setCouponMessage('クーポンコード <span class="coupon-code">000000</span><br><span class="coupon-message">このクーポンコードを忘れずに保管してね♥</span>');
         } else {
-          // 特定の日付以外は必ずハズレにする
           resultIndex = sectors.findIndex(sector => sector.label === 'ハズレ');
-          setCouponMessage('');
         }
 
-        const sector = sectors[resultIndex]; // ルーレットの結果を正しく取得
+        const sector = sectors[resultIndex];
         setResult(sector.label);
         arrowAngleRef.current = finalAngle;
         setCanSpin(false);
         setTimeLeft(calculateTimeLeftUntilMidnight());
-        localStorage.setItem('lastSpinTime', new Date().toISOString());
+
+        // クーポンコードの設定
+        if (sector.label === '¥500 OFF') {
+          setCouponMessage('クーポンコード <span class="coupon-code">000000</span><br><span class="coupon-message">このクーポンコードを忘れずに保管してね♥</span>');
+        } else if (sector.label === '¥1000 OFF') {
+          setCouponMessage('クーポンコード <span class="coupon-code">111111</span><br><span class="coupon-message">このクーポンコードを忘れずに保管してね♥</span>');
+        } else {
+          setCouponMessage('');
+        }
+
+        const { error } = await supabase
+          .from('users')
+          .update({ last_spin: new Date().toISOString(), spin_count: spinCountRef.current + 1 })
+          .eq('id', userIdRef.current);
+
+        if (error) {
+          console.error('Error updating user data:', error);
+        }
+
         spinCountRef.current++;
-        consecutiveDaysRef.current++;
-        localStorage.setItem('spinCount', spinCountRef.current);
-        localStorage.setItem('consecutiveDays', consecutiveDaysRef.current);
       }
     };
 
@@ -211,7 +237,7 @@ const Roulette = () => {
       <h1>クーポンGETのチャンス</h1>
       <p>１日１回ルーレットを回してみよう</p>
       <div className="roulette-image-container">
-        <canvas ref={canvasRef} width={350} height={350}></canvas> {/* キャンバスのサイズを大きくする */}
+        <canvas ref={canvasRef} width={350} height={350}></canvas>
       </div>
       {canSpin ? (
         <button onClick={spinRoulette} disabled={spinning}>
@@ -228,7 +254,7 @@ const Roulette = () => {
           )}
         </div>
       )}
-      <div style={{ marginBottom: '20px' }}></div> {/* 余白を追加 */}
+      <div style={{ marginBottom: '20px' }}></div>
     </div>
   );
 };
