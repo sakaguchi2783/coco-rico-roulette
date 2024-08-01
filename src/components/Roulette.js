@@ -1,260 +1,238 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import './Roulette.css';
+import React, { useState, useRef, useEffect } from 'react';
+import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
-import { supabase } from '../supabaseClient';
+
+const supabaseUrl = 'https://your-supabase-url.supabase.co';
+const supabaseAnonKey = 'your-anon-key';
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const sectors = [
   { label: '¥500 OFF', color: '#000000', textColor: '#FFFFFF' },
   { label: 'ハズレ', color: '#D3D3D3', textColor: '#000000' },
   { label: '¥1000 OFF', color: '#000000', textColor: '#FFFFFF' },
-  { label: 'ハズレ', color: '#FFFFFF', textColor: '#000000' },
   { label: 'ハズレ', color: '#D3D3D3', textColor: '#000000' },
-  { label: '¥500 OFF', color: '#000000', textColor: '#FFFFFF' },
-  { label: 'ハズレ', color: '#FFFFFF', textColor: '#000000' },
-  { label: '¥1000 OFF', color: '#000000', textColor: '#FFFFFF' },
-  { label: 'ハズレ', color: '#D3D3D3', textColor: '#000000' },
-  { label: 'ハズレ', color: '#FFFFFF', textColor: '#000000' },
   { label: '¥500 OFF', color: '#000000', textColor: '#FFFFFF' },
   { label: 'ハズレ', color: '#D3D3D3', textColor: '#000000' },
   { label: '¥1000 OFF', color: '#000000', textColor: '#FFFFFF' },
-  { label: 'ハズレ', color: '#FFFFFF', textColor: '#000000' },
   { label: 'ハズレ', color: '#D3D3D3', textColor: '#000000' },
-  { label: '¥500 OFF', color: '#000000', textColor: '#FFFFFF' },
-  { label: 'ハズレ', color: '#FFFFFF', textColor: '#000000' },
-  { label: '¥1000 OFF', color: '#000000', textColor: '#FFFFFF' },
-  { label: 'ハズレ', color: '#D3D3D3', textColor: '#000000' },
-  { label: 'ハズレ', color: '#FFFFFF', textColor: '#000000' },
   { label: '¥500 OFF', color: '#000000', textColor: '#FFFFFF' },
   { label: 'ハズレ', color: '#D3D3D3', textColor: '#000000' },
   { label: '¥1000 OFF', color: '#000000', textColor: '#FFFFFF' },
-  { label: 'ハズレ', color: '#FFFFFF', textColor: '#000000' },
   { label: 'ハズレ', color: '#D3D3D3', textColor: '#000000' },
   { label: '¥500 OFF', color: '#000000', textColor: '#FFFFFF' },
-  { label: 'ハズレ', color: '#FFFFFF', textColor: '#000000' },
+  { label: 'ハズレ', color: '#D3D3D3', textColor: '#000000' },
   { label: '¥1000 OFF', color: '#000000', textColor: '#FFFFFF' },
   { label: 'ハズレ', color: '#D3D3D3', textColor: '#000000' },
-  { label: 'ハズレ', color: '#FFFFFF', textColor: '#000000' }
+  { label: '¥500 OFF', color: '#000000', textColor: '#FFFFFF' },
+  { label: 'ハズレ', color: '#D3D3D3', textColor: '#000000' },
+  { label: '¥1000 OFF', color: '#000000', textColor: '#FFFFFF' },
+  { label: 'ハズレ', color: '#D3D3D3', textColor: '#000000' },
+  { label: '¥500 OFF', color: '#000000', textColor: '#FFFFFF' },
+  { label: 'ハズレ', color: '#D3D3D3', textColor: '#000000' },
+  { label: '¥1000 OFF', color: '#000000', textColor: '#FFFFFF' },
+  { label: 'ハズレ', color: '#D3D3D3', textColor: '#000000' },
+  { label: '¥500 OFF', color: '#000000', textColor: '#FFFFFF' },
+  { label: 'ハズレ', color: '#D3D3D3', textColor: '#000000' },
+  { label: '¥1000 OFF', color: '#000000', textColor: '#FFFFFF' },
+  { label: 'ハズレ', color: '#D3D3D3', textColor: '#000000' },
+  { label: '¥500 OFF', color: '#000000', textColor: '#FFFFFF' },
+  { label: 'ハズレ', color: '#D3D3D3', textColor: '#000000' },
 ];
+
+const getSectorFromAngle = (angle) => {
+  const sectorAngle = 360 / sectors.length;
+  return sectors[Math.floor(angle / sectorAngle) % sectors.length];
+};
+
+const getFixedResultIndex = () => {
+  const now = new Date();
+  const date = now.getDate();
+
+  // 指定日に当たる結果を設定
+  switch (date) {
+    case 1:
+      return 1; // ハズレ
+    case 2:
+      return 2; // ¥1000 OFF
+    case 3:
+      return 3; // ハズレ
+    case 4:
+      return 4; // ¥500 OFF
+    case 5:
+      return 5; // ハズレ
+    default:
+      return 0; // デフォルトで1つ目のセクターを設定
+  }
+};
+
+const calculateTimeLeftUntilMidnight = () => {
+  const now = new Date();
+  const midnight = new Date(now);
+  midnight.setHours(24, 0, 0, 0);
+  return midnight - now;
+};
 
 const Roulette = () => {
   const [result, setResult] = useState('');
-  const [spinning, setSpinning] = useState(false);
+  const [couponMessage, setCouponMessage] = useState('');
+  const [timeLeft, setTimeLeft] = useState(calculateTimeLeftUntilMidnight());
   const [canSpin, setCanSpin] = useState(true);
-  const [timeLeft, setTimeLeft] = useState(0);
+  const [spinning, setSpinning] = useState(false);
   const canvasRef = useRef(null);
   const arrowAngleRef = useRef(0);
-  const userIdRef = useRef(localStorage.getItem('userId') || uuidv4());
-  const spinCountRef = useRef(0);
-  const [couponMessage, setCouponMessage] = useState('');
+  const userIdRef = useRef(null);
 
-  const drawRoulette = useCallback((angle = 0) => {
+  useEffect(() => {
+    // 新しいユーザーIDを生成し、設定
+    const userId = uuidv4();
+    userIdRef.current = userId;
+
+    // Supabaseにユーザー情報を保存
+    const saveUserData = async () => {
+      const { data, error } = await supabase
+        .from('users')
+        .insert([{ id: userId, last_spin: null, spin_count: 0 }]);
+
+      if (error) {
+        console.error('Error inserting user data:', error);
+      }
+    };
+
+    saveUserData();
+    drawRoulette();
+  }, []);
+
+  const drawRoulette = () => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
-    const radius = Math.min(centerX, centerY) - 20;
-    const angleStep = (2 * Math.PI) / sectors.length;
+    const radius = Math.min(centerX, centerY);
 
+    // 背景色をクリア
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     sectors.forEach((sector, index) => {
+      const startAngle = (index * 2 * Math.PI) / sectors.length;
+      const endAngle = ((index + 1) * 2 * Math.PI) / sectors.length;
+
+      // セクターを描画
       ctx.beginPath();
       ctx.moveTo(centerX, centerY);
-      ctx.arc(centerX, centerY, radius, index * angleStep, (index + 1) * angleStep);
+      ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+      ctx.closePath();
       ctx.fillStyle = sector.color;
       ctx.fill();
-      ctx.stroke();
 
+      // セクターのテキストを描画
       ctx.save();
       ctx.translate(centerX, centerY);
-      ctx.rotate(index * angleStep + angleStep / 2);
+      ctx.rotate(startAngle + (endAngle - startAngle) / 2);
       ctx.textAlign = 'right';
       ctx.fillStyle = sector.textColor;
-      ctx.font = '14px Arial';
+      ctx.font = 'bold 12px Arial';
       ctx.fillText(sector.label, radius - 10, 5);
       ctx.restore();
     });
 
-    ctx.save();
-    ctx.translate(centerX, centerY);
-    ctx.rotate((angle * Math.PI) / 180);
-    ctx.translate(-centerX, -centerY);
-    ctx.beginPath();
-    ctx.moveTo(centerX, centerY - radius);
-    ctx.lineTo(centerX - 10, centerY - radius - 20);
-    ctx.lineTo(centerX + 10, centerY - radius - 20);
-    ctx.closePath();
+    // 矢印を描画
     ctx.fillStyle = 'red';
+    ctx.beginPath();
+    ctx.moveTo(centerX - 10, 10);
+    ctx.lineTo(centerX + 10, 10);
+    ctx.lineTo(centerX, 30);
+    ctx.closePath();
     ctx.fill();
-    ctx.restore();
-
-    arrowAngleRef.current = angle;
-  }, []);
-
-  useEffect(() => {
-    const userId = userIdRef.current;
-    localStorage.setItem('userId', userId);
-
-    const fetchUserData = async () => {
-      let { data: userData, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching user data:', error);
-        return;
-      }
-
-      if (!userData) {
-        const { data, error: insertError } = await supabase
-          .from('users')
-          .insert({ id: userId, last_spin: null, spin_count: 0 })
-          .single();
-
-        if (insertError) {
-          console.error('Error inserting new user:', insertError);
-          return;
-        }
-
-        userData = data;
-      }
-
-      spinCountRef.current = userData.spin_count;
-
-      if (userData.last_spin) {
-        const lastSpinDate = new Date(userData.last_spin);
-        const now = new Date();
-        const hoursSinceLastSpin = Math.floor((now - lastSpinDate) / (1000 * 60 * 60));
-
-        if (hoursSinceLastSpin < 24) {
-          setCanSpin(false);
-          setTimeLeft(calculateTimeLeftUntilMidnight());
-        }
-      }
-    };
-
-    fetchUserData();
-    drawRoulette(arrowAngleRef.current);
-    const interval = setInterval(() => {
-      if (!canSpin) {
-        setTimeLeft(calculateTimeLeftUntilMidnight());
-      }
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [canSpin, drawRoulette]);
-
-  const calculateTimeLeftUntilMidnight = () => {
-    const now = new Date();
-    const midnight = new Date();
-    midnight.setHours(24, 0, 0, 0);
-    const diff = midnight - now;
-    return Math.floor(diff / 1000);
-  };
-
-  const isSpecialDate = () => {
-    const now = new Date();
-    const month = now.getMonth() + 1;
-    const date = now.getDate();
-    return month === 8 && date === 1;
   };
 
   const spinRoulette = async () => {
+    if (!canSpin || spinning) return;
+
     setSpinning(true);
-    const spinAngle = Math.random() * 3600 + 3600;
-    const duration = 6000;
     let start = null;
+    const duration = 4000; // アニメーションの時間（ミリ秒）
+    const maxAngle = 360 * 4; // 最大回転角度
+    const finalAngle = maxAngle + Math.random() * 360; // 最終的な回転角度
 
     const step = async (timestamp) => {
       if (!start) start = timestamp;
-      const progress = timestamp - start;
-      const angle = easeOutCubic(progress, 0, spinAngle, duration);
+      const elapsed = timestamp - start;
+      const progress = Math.min(elapsed / duration, 1); // 進行率（0から1）
 
-      drawRoulette(angle);
+      const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+      const angle = easeOutCubic(progress) * finalAngle;
+      arrowAngleRef.current = angle;
+      drawRoulette();
 
-      if (progress < duration) {
+      if (progress < 1) {
         window.requestAnimationFrame(step);
       } else {
         setSpinning(false);
-        const finalAngle = (angle % 360);
-        const sectorAngle = 360 / sectors.length;
-        const correctedAngle = (360 - finalAngle + (sectorAngle / 2)) % 360;
-        let resultIndex = Math.floor(correctedAngle / sectorAngle);
 
-        if (isSpecialDate()) {
-          resultIndex = sectors.findIndex(sector => sector.label !== 'ハズレ');
-        } else {
-          resultIndex = sectors.findIndex(sector => sector.label === 'ハズレ');
-        }
+        // 指定日に基づく結果インデックスの取得
+        const resultIndex = getFixedResultIndex();
 
         const sector = sectors[resultIndex];
         setResult(sector.label);
-        arrowAngleRef.current = finalAngle;
-        setCanSpin(false);
-        setTimeLeft(calculateTimeLeftUntilMidnight());
+        arrowAngleRef.current = finalAngle % 360;
 
-        // クーポンコードの設定
+        // クーポンメッセージの設定
         if (sector.label === '¥500 OFF') {
-          setCouponMessage('クーポンコード <span class="coupon-code">000000</span><br><span class="coupon-message">このクーポンコードを忘れずに保管してね♥</span>');
+          setCouponMessage('クーポンコード 000000\nこのクーポンコードを忘れずに保管してね♥');
         } else if (sector.label === '¥1000 OFF') {
-          setCouponMessage('クーポンコード <span class="coupon-code">111111</span><br><span class="coupon-message">このクーポンコードを忘れずに保管してね♥</span>');
+          setCouponMessage('クーポンコード 111111\nこのクーポンコードを忘れずに保管してね♥');
         } else {
           setCouponMessage('');
         }
 
+        // Supabaseに結果を保存
         const { error } = await supabase
           .from('users')
-          .update({ last_spin: new Date().toISOString(), spin_count: spinCountRef.current + 1 })
+          .update({ last_spin: new Date().toISOString(), spin_count: 1 })
           .eq('id', userIdRef.current);
 
         if (error) {
           console.error('Error updating user data:', error);
         }
-
-        spinCountRef.current++;
       }
     };
 
     window.requestAnimationFrame(step);
+
+    // 次のスピンまでの時間設定
+    setTimeLeft(calculateTimeLeftUntilMidnight());
+    setCanSpin(false);
   };
 
-  const easeOutCubic = (t, b, c, d) => {
-    t /= d;
-    t--;
-    return c * (t * t * t + 1) + b;
-  };
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setTimeLeft(calculateTimeLeftUntilMidnight());
+    }, 1000);
 
-  const formatTime = (seconds) => {
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    return `${hrs}時間${mins}分${secs}秒`;
-  };
+    return () => clearTimeout(timer);
+  }, [timeLeft]);
 
   return (
-    <div className="roulette-container">
+    <div>
       <h1>クーポンGETのチャンス</h1>
-      <p>１日１回ルーレットを回してみよう</p>
-      <div className="roulette-image-container">
-        <canvas ref={canvasRef} width={350} height={350}></canvas>
-      </div>
-      {canSpin ? (
-        <button onClick={spinRoulette} disabled={spinning}>
-          {spinning ? '回転中...' : 'ルーレットを回す'}
-        </button>
-      ) : (
-        <p className="message-box">残りあと、{formatTime(timeLeft)}後にチャレンジできるよ❣</p>
-      )}
-      {result && (
-        <div className="message-box">
-          <p>{result}</p>
-          {couponMessage && (
-            <div className="coupon-box" dangerouslySetInnerHTML={{ __html: couponMessage }}></div>
-          )}
+      <p>1日1回ルーレットを回してみよう</p>
+      <canvas ref={canvasRef} width="300" height="300" />
+      <button onClick={spinRoulette} disabled={!canSpin}>ルーレットを回す</button>
+      <div style={{ marginTop: '20px' }}>
+        <div style={{ border: '1px solid black', borderRadius: '10px', padding: '10px', marginBottom: '10px' }}>
+          {timeLeft > 0
+            ? `残りあと、${Math.floor(timeLeft / 1000 / 60 / 60)}時間${Math.floor((timeLeft / 1000 / 60) % 60)}分${Math.floor((timeLeft / 1000) % 60)}秒後にチャレンジできるよ❣`
+            : 'ルーレットを回せます'}
         </div>
-      )}
-      <div style={{ marginBottom: '20px' }}></div>
+        <div style={{ border: '1px solid black', borderRadius: '10px', padding: '10px', marginBottom: '10px' }}>
+          {result}
+        </div>
+        {couponMessage && (
+          <div style={{ border: '1px solid black', borderRadius: '10px', padding: '10px' }}>
+            {couponMessage}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
