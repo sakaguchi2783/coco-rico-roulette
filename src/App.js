@@ -1,14 +1,11 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import Roulette from './components/Roulette';
+import SlotMachine from './SlotMachine'; // SlotMachine.jsをインポート
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Roulette />} />
-      </Routes>
-    </Router>
+    <div className="App">
+      <SlotMachine />
+    </div>
   );
 }
 
