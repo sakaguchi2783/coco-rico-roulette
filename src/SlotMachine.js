@@ -54,7 +54,7 @@ const SlotMachine = () => {
 
     insertUser();
 
-    // スピン履歴の確認
+    // 1日1回の制限を確認
     const checkLastSpin = async () => {
       try {
         const { data, error } = await supabase
@@ -63,19 +63,15 @@ const SlotMachine = () => {
           .eq('user_id', storedUserId)
           .order('created_at', { ascending: false })
           .limit(1);
+
         if (error) throw error;
 
         if (data.length > 0) {
-          const lastSpin = new Date(data[0].created_at);
+          const lastSpinTime = new Date(data[0].created_at);
           const now = new Date();
-          const timeDiff = now - lastSpin;
-          const hoursDiff = timeDiff / (1000 * 60 * 60);
-          if (hoursDiff < 24) {
+          if (now.toDateString() === lastSpinTime.toDateString()) {
             setCanSpin(false);
-            const remainingTime = 24 - hoursDiff;
-            const hours = Math.floor(remainingTime);
-            const minutes = Math.floor((remainingTime % 1) * 60);
-            setTimeRemaining(`残り${hours}時間${minutes}分後にチャレンジできます！`);
+            setTimeRemaining('今日のチャレンジはもう完了しました！');
           }
         }
       } catch (error) {
@@ -84,7 +80,7 @@ const SlotMachine = () => {
     };
 
     checkLastSpin();
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
     // カウントダウンの設定
@@ -116,6 +112,8 @@ const SlotMachine = () => {
     setIsRolling(true);
     setResult('');
     setCanSpin(false);
+
+    
   
     // ランダムな回転時間を生成 (8秒から17秒の間)
     const spinDuration = Math.random() * 9000 + 8000;
