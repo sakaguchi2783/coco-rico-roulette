@@ -138,7 +138,7 @@ const SlotMachine = () => {
 
       // 指定日以外はハズレまたはもう1回
       const today = new Date();
-      const isSpecialDate = today.getMonth() === 6 && (today.getDate() === 12 || today.getDate() === 14);
+      const isSpecialDate = today.getMonth() === 7 && (today.getDate() === 12 || today.getDate() === 14);
       if (!isSpecialDate && finalResult !== 'ハズレ' && finalResult !== 'もう1回') {
         finalResult = 'ハズレ';
       }
