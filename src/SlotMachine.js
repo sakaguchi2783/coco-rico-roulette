@@ -54,32 +54,8 @@ const SlotMachine = () => {
 
     insertUser();
 
-    // 1日1回の制限を確認
-    const checkLastSpin = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('spin_results')
-          .select('*')
-          .eq('user_id', storedUserId)
-          .order('created_at', { ascending: false })
-          .limit(1);
+    //ココに1日1回制限のコードを入れる
 
-        if (error) throw error;
-
-        if (data.length > 0) {
-          const lastSpinTime = new Date(data[0].created_at);
-          const now = new Date();
-          if (now.toDateString() === lastSpinTime.toDateString()) {
-            setCanSpin(false);
-            setTimeRemaining('今日のチャレンジはもう完了しました！');
-          }
-        }
-      } catch (error) {
-        console.error('Error checking last spin:', error.message);
-      }
-    };
-
-    checkLastSpin();
   }, [userId]);
 
   useEffect(() => {
@@ -111,10 +87,7 @@ const SlotMachine = () => {
   
     setIsRolling(true);
     setResult('');
-    setCanSpin(false);
 
-    
-  
     // ランダムな回転時間を生成 (8秒から17秒の間)
     const spinDuration = Math.random() * 9000 + 8000;
   
@@ -155,20 +128,24 @@ const SlotMachine = () => {
         console.error('Error inserting spin result:', error.message);
       }
   
-      // スロットの結果に応じた処理
-      if (finalResult === 'もう1回') {
-        setCanSpin(true);
-      } else if (finalResult === 'ハズレ') {
-        const now = new Date();
-        const nextSpinTime = new Date();
-        nextSpinTime.setHours(24, 0, 0, 0);
-        const timeDiff = nextSpinTime - now;
-        const hours = Math.floor(timeDiff / 1000 / 60 / 60);
-        const minutes = Math.floor((timeDiff / 1000 / 60) % 60);
-        const seconds = Math.floor((timeDiff / 1000) % 60);
-        setTimeRemaining(`${hours}時間${minutes}分${seconds}秒後にチャレンジできます！`);
-      }
+        // スロットの結果に応じた処理
+        if (finalResult === 'もう1回') {
+          setCanSpin(true);
+        } else {
+          // スピンが終わった後に残り時間を設定する
+          setCanSpin(false);
   
+          // 残り時間の計算と表示
+          const now = new Date();
+          const nextSpinTime = new Date();
+          nextSpinTime.setHours(24, 0, 0, 0);
+          const timeDiff = nextSpinTime - now;
+          const hours = Math.floor(timeDiff / 1000 / 60 / 60);
+          const minutes = Math.floor((timeDiff / 1000 / 60) % 60);
+          const seconds = Math.floor((timeDiff / 1000) % 60);
+          setTimeRemaining(`${hours}時間${minutes}分${seconds}秒後にチャレンジできます！`);
+      }
+
       setIsRolling(false);
     }, spinDuration);
   };

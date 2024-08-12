@@ -1,7 +1,7 @@
 /* スロットマシンのスタイル */
 .slot-machine {
   text-align: center;
-  margin-top:200px;
+  margin-top:50px;
 }
 
 /* リールコンテナのスタイル */
@@ -32,7 +32,7 @@
   font-size: 24px;
   height: 100px;
   background-color: #fff; /* アイテムの背景色 */
-  border-bottom: 1px solid #ccc; /* アイテム間のボーダー */
+  border-bottom: 0px solid #ccc; /* アイテム間のボーダー */
 }
 
 /* グレーエリアの設定 */
