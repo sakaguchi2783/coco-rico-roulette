@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import './SlotMachine.css';
+import cocoRicoImage from './images/cocoRico.jpeg'; // 新しく追加した画像パス
 
 // Supabaseのクライアントを作成するためのURLとキー
 const supabaseUrl = 'https://cwmpzcqnjlbfmximqkkq.supabase.co';
@@ -10,18 +11,29 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 // リールのアイテム
 const reelItems = [
   '¥500 OFF', '¥1000 OFF', 'ハズレ', 'もう1回',
-  '¥500 OFF', '¥1000 OFF', 'ハズレ', 'もう1回',
-  '¥500 OFF', '¥1000 OFF', 'ハズレ', 'もう1回',
-  '¥500 OFF', '¥1000 OFF', 'ハズレ', 'もう1回',
-  '¥500 OFF', '¥1000 OFF', 'ハズレ', 'もう1回',
-  '¥500 OFF', '¥1000 OFF', 'ハズレ', 'もう1回',
-  '¥500 OFF', '¥1000 OFF', 'ハズレ', 'もう1回',
-  '¥500 OFF', '¥1000 OFF', 'ハズレ', 'もう1回',
-  '¥500 OFF', '¥1000 OFF', 'ハズレ', 'もう1回',
-  '¥500 OFF', '¥1000 OFF', 'ハズレ', 'もう1回',
-  '¥500 OFF', '¥1000 OFF', 'ハズレ', 'もう1回',
-  '¥500 OFF', '¥1000 OFF', 'ハズレ', 'もう1回',
-  '¥500 OFF', '¥1000 OFF', 'ハズレ', 'もう1回',
+  'ハズレ', '¥500 OFF', 'ハズレ', 'もう1回',
+  'ハズレ', 'もう1回', 'ハズレ', 'もう1回',
+  'ハズレ', '¥500 OFF', 'ハズレ', 'もう1回',
+  'ハズレ', 'もう1回', 'ハズレ', 'ハズレ',
+  'ハズレ', 'もう1回', 'ハズレ', '¥1000 OFF',
+  'ハズレ', '¥500 OFF', 'ハズレ', 'もう1回',
+  'ハズレ', 'もう1回', 'ハズレ', 'もう1回',
+  'ハズレ', '¥500 OFF', 'ハズレ', 'ハズレ',
+  'ハズレ', 'ハズレ', 'ハズレ', 'もう1回',
+  'ハズレ', 'もう1回', 'ハズレ', '¥1000 OFF',
+  'ハズレ', '¥500 OFF', 'ハズレ', 'もう1回',
+  'ハズレ', 'もう1回', 'ハズレ', 'ハズレ',
+  'ハズレ', '¥500 OFF', 'ハズレ', 'もう1回',
+  'ハズレ', 'もう1回', 'ハズレ', 'もう1回',
+  'ハズレ', 'ハズレ', 'ハズレ', 'もう1回',
+  'ハズレ', 'ハズレ', 'ハズレ', 'もう1回',
+  'ハズレ', 'もう1回', 'ハズレ', '¥1000 OFF',
+  'ハズレ', '¥500 OFF', 'ハズレ', 'もう1回',
+  'ハズレ', 'もう1回', 'ハズレ', 'もう1回',
+  'ハズレ', '¥500 OFF', 'ハズレ', 'もう1回',
+  'ハズレ', 'もう1回', 'ハズレ', 'もう1回',
+  'ハズレ', 'ハズレ', 'ハズレ', 'ハズレ', 
+  'ハズレ', 'ハズレ', 'もう1回',
 ];
 
 const SlotMachine = () => {
@@ -54,8 +66,32 @@ const SlotMachine = () => {
 
     insertUser();
 
-    //ココに1日1回制限のコードを入れる
+    // 1日1回の制限を確認
+    const checkLastSpin = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('spin_results')
+          .select('*')
+          .eq('user_id', storedUserId)
+          .order('created_at', { ascending: false })
+          .limit(1);
 
+        if (error) throw error;
+
+        if (data.length > 0) {
+          const lastSpinTime = new Date(data[0].created_at);
+          const now = new Date();
+          if (now.toDateString() === lastSpinTime.toDateString()) {
+            setCanSpin(false);
+            setTimeRemaining('今日のチャレンジはもう完了しました！');
+          }
+        }
+      } catch (error) {
+        console.error('Error checking last spin:', error.message);
+      }
+    };
+
+    checkLastSpin();
   }, [userId]);
 
   useEffect(() => {
@@ -88,8 +124,8 @@ const SlotMachine = () => {
     setIsRolling(true);
     setResult('');
 
-    // ランダムな回転時間を生成 (8秒から17秒の間)
-    const spinDuration = Math.random() * 9000 + 8000;
+    // ランダムな回転時間を生成 (7秒から11秒の間)
+    const spinDuration = Math.random() * 4000 + 3000;
   
     // ランダムな停止位置を計算
     const randomStopPosition = Math.floor(Math.random() * reelItems.length);
@@ -102,22 +138,26 @@ const SlotMachine = () => {
   
     // 回転が終わった後に結果を決定
     setTimeout(async () => {
-      reelRef.current.style.transition = '';
-      reelRef.current.style.transform = `translateY(${stopPosition}px)`;
-  
-      // 中段の結果を取得
-      const centralIndex = (randomStopPosition + Math.floor(reelItems.length / 1.4)) % reelItems.length;
-      let finalResult = reelItems[centralIndex];
-
-      // 指定日以外はハズレまたはもう1回
-      const today = new Date();
-      const isSpecialDate = today.getMonth() === 7 && (today.getDate() === 12 || today.getDate() === 14);
-      if (!isSpecialDate && finalResult !== 'ハズレ' && finalResult !== 'もう1回') {
-        finalResult = 'ハズレ';
+      // リール停止後の位置を取得
+      const middleRect = reelRef.current.parentElement.querySelector('.middle').getBoundingClientRect();
+      
+      // 中央に一番近いアイテムを特定
+      const items = reelRef.current.children;
+      let closestIndex = 0;
+      let closestDistance = Infinity;
+    
+      for (let i = 0; i < items.length; i++) {
+        const itemRect = items[i].getBoundingClientRect();
+        const distance = Math.abs(middleRect.top - itemRect.top);
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestIndex = i;
+        }
       }
-
+    
+      const finalResult = reelItems[closestIndex];
       setResult(finalResult);
-  
+      
       // データベースへの結果の保存
       try {
         const { error } = await supabase.from('spin_results').insert([
@@ -128,32 +168,33 @@ const SlotMachine = () => {
         console.error('Error inserting spin result:', error.message);
       }
   
-        // スロットの結果に応じた処理
-        if (finalResult === 'もう1回') {
-          setCanSpin(true);
-        } else {
-          // スピンが終わった後に残り時間を設定する
-          setCanSpin(false);
-  
-          // 残り時間の計算と表示
-          const now = new Date();
-          const nextSpinTime = new Date();
-          nextSpinTime.setHours(24, 0, 0, 0);
-          const timeDiff = nextSpinTime - now;
-          const hours = Math.floor(timeDiff / 1000 / 60 / 60);
-          const minutes = Math.floor((timeDiff / 1000 / 60) % 60);
-          const seconds = Math.floor((timeDiff / 1000) % 60);
-          setTimeRemaining(`${hours}時間${minutes}分${seconds}秒後にチャレンジできます！`);
+      // スロットの結果に応じた処理
+      if (finalResult === 'もう1回') {
+        setCanSpin(true); // もう一回スピン可能に
+      } else if (finalResult === '¥500 OFF' || finalResult === '¥1000 OFF') {
+        alert(`おめでとうございます！クーポンコード: ${finalResult === '¥500 OFF' ? '000000' : '111111'}をお使いください。`);
+        setCanSpin(false); // 1日1回のみ
+      } else {
+        setCanSpin(false); // ハズレの場合
+        const now = new Date();
+        const nextSpinTime = new Date();
+        nextSpinTime.setHours(24, 0, 0, 0);
+        const timeDiff = nextSpinTime - now;
+        const hours = Math.floor(timeDiff / 1000 / 60 / 60);
+        const minutes = Math.floor((timeDiff / 1000 / 60) % 60);
+        const seconds = Math.floor((timeDiff / 1000) % 60);
+        setTimeRemaining(`${hours}時間${minutes}分${seconds}秒後にチャレンジできます！`);
       }
-
+  
       setIsRolling(false);
     }, spinDuration);
   };
   
   return (
     <div className="slot-machine">
-      <h1>クーポンGETのチャンス</h1>
-      <h2>1日1回チャレンジ</h2>
+      <div className="image-container">
+        <img src={cocoRicoImage} alt="Coco Rico" />
+      </div>
       <div className="reel-container">
         <div className="top"></div>
         <div className="middle"></div>
@@ -172,14 +213,12 @@ const SlotMachine = () => {
               <div>
                 <p>おめでとうございます</p>
                 <p>クーポンコード <span style={{ color: 'red' }}>000000</span></p>
-                <p>このクーポンコードを忘れずに保管してね♥</p>
               </div>
             )}
             {result === '¥1000 OFF' && (
               <div>
                 <p>おめでとうございます</p>
                 <p>クーポンコード <span style={{ color: 'red' }}>111111</span></p>
-                <p>このクーポンコードを忘れずに保管してね♥</p>
               </div>
             )}
             {result === 'ハズレ' && <p>残念！また明日チャレンジしてね</p>}

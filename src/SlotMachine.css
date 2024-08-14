@@ -1,7 +1,8 @@
 /* スロットマシンのスタイル */
 .slot-machine {
   text-align: center;
-  margin-top:50px;
+  margin-top: 0px;
+  font-family: 'Arial', sans-serif;
 }
 
 /* リールコンテナのスタイル */
@@ -64,15 +65,36 @@
   z-index: 3;
 }
 
-
 button {
-  margin-top: 20px;
+  margin-top: 30px;
   padding: 10px 20px;
   font-size: 16px;
+  background-color: #f0f0f0;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  color: #1a1a1a;
+}
+
+button:disabled {
+  background-color: #ddd;
+  cursor: not-allowed;
 }
 
 .result, .time-remaining {
   margin-top: 20px;
   font-size: 16px;
+  color: #444;
 }
 
+/* ヘッダーのスタイル */
+.image-container {
+  text-align: center;
+  margin-bottom: 0px;
+}
+
+.image-container img {
+  width: 500px;
+  height: auto;
+  margin: 0 auto;
+}
