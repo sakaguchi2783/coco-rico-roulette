@@ -12,7 +12,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 const reelItems = [
   '¥500 OFF', '¥1000 OFF', 'ハズレ', 'もう1回',
   'ハズレ', '¥500 OFF', 'ハズレ', 'もう1回',
-  'ハズレ', 'もう1回', 'ハズレ', 'もう1回',
+  'ハズレ', 'ハズレ', 'ハズレ', 'もう1回',
   'ハズレ', '¥500 OFF', 'ハズレ', 'もう1回',
   'ハズレ', 'もう1回', 'ハズレ', 'ハズレ',
   'ハズレ', 'もう1回', 'ハズレ', '¥1000 OFF',
@@ -97,13 +97,13 @@ const SlotMachine = () => {
     setIsRolling(true);
     setResult('');
 
-    // ランダムな回転時間を生成 (7秒から11秒の間)
-    const spinDuration = Math.random() * 4000 + 3000;
+    // 回転時間を固定 (3秒)
+    const spinDuration = 3000;
 
-    // ランダムな停止位置を計算
-    const randomStopPosition = Math.floor(Math.random() * reelItems.length);
+    // 固定の停止位置を設定（例: 常に最後の「ハズレ」）
+    const targetIndex = 23; // 例: 常に reelItems[15] の位置に止まる
     const itemHeight = reelRef.current.firstChild.clientHeight;
-    const stopPosition = randomStopPosition * -itemHeight;
+    const stopPosition = targetIndex * -itemHeight;
 
     // リールのスタイルを変更して回転開始
     reelRef.current.style.transition = `transform ${spinDuration}ms cubic-bezier(0.2, 0.1, 0.5, 1)`;
@@ -111,24 +111,7 @@ const SlotMachine = () => {
 
     // 回転が終わった後に結果を決定
     setTimeout(async () => {
-      // リール停止後の位置を取得
-      const middleRect = reelRef.current.parentElement.querySelector('.middle').getBoundingClientRect();
-
-      // 中央に一番近いアイテムを特定
-      const items = reelRef.current.children;
-      let closestIndex = 0;
-      let closestDistance = Infinity;
-
-      for (let i = 0; i < items.length; i++) {
-        const itemRect = items[i].getBoundingClientRect();
-        const distance = Math.abs(middleRect.top - itemRect.top);
-        if (distance < closestDistance) {
-          closestDistance = distance;
-          closestIndex = i;
-        }
-      }
-
-      const finalResult = reelItems[closestIndex];
+      const finalResult = reelItems[targetIndex];
       setResult(finalResult);
 
       // データベースへの結果の保存
