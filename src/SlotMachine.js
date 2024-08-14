@@ -32,7 +32,7 @@ const reelItems = [
   'ハズレ', 'もう1回', 'ハズレ', 'もう1回',
   'ハズレ', '¥500 OFF', 'ハズレ', 'もう1回',
   'ハズレ', 'もう1回', 'ハズレ', 'もう1回',
-  'ハズレ', 'ハズレ', 'ハズレ', 'ハズレ', 
+  'ハズレ', 'ハズレ', 'ハズレ','ハズレ', 
   'ハズレ', 'ハズレ', 'もう1回',
 ];
 
@@ -168,68 +168,68 @@ const SlotMachine = () => {
         console.error('Error inserting spin result:', error.message);
       }
   
-      // スロットの結果に応じた処理
-      if (finalResult === 'もう1回') {
-        setCanSpin(true); // もう一回スピン可能に
-      } else if (finalResult === '¥500 OFF' || finalResult === '¥1000 OFF') {
-        alert(`おめでとうございます！クーポンコード: ${finalResult === '¥500 OFF' ? '000000' : '111111'}をお使いください。`);
-        setCanSpin(false); // 1日1回のみ
-      } else {
-        setCanSpin(false); // ハズレの場合
-        const now = new Date();
-        const nextSpinTime = new Date();
-        nextSpinTime.setHours(24, 0, 0, 0);
-        const timeDiff = nextSpinTime - now;
-        const hours = Math.floor(timeDiff / 1000 / 60 / 60);
-        const minutes = Math.floor((timeDiff / 1000 / 60) % 60);
-        const seconds = Math.floor((timeDiff / 1000) % 60);
-        setTimeRemaining(`${hours}時間${minutes}分${seconds}秒後にチャレンジできます！`);
-      }
+        // スロットの結果に応じた処理
+        if (finalResult === 'もう1回') {
+          setCanSpin(true); // もう一回スピン可能に
+        } else if (finalResult === '¥500 OFF' || finalResult === '¥1000 OFF') {
+          alert(`おめでとうございます！クーポンコード: ${finalResult === '¥500 OFF' ? '000000' : '111111'}をお使いください。`);
+          setCanSpin(false); // 1日1回のみ
+        } else {
+          setCanSpin(false); // ハズレの場合
+          const now = new Date();
+          const nextSpinTime = new Date();
+          nextSpinTime.setHours(24, 0, 0, 0);
+          const timeDiff = nextSpinTime - now;
+          const hours = Math.floor(timeDiff / 1000 / 60 / 60);
+          const minutes = Math.floor((timeDiff / 1000 / 60) % 60);
+          const seconds = Math.floor((timeDiff / 1000) % 60);
+          setTimeRemaining(`${hours}時間${minutes}分${seconds}秒後にチャレンジできます！`);
+        }
   
-      setIsRolling(false);
-    }, spinDuration);
-  };
-  
-  return (
-    <div className="slot-machine">
+        setIsRolling(false);
+      }, spinDuration);
+    };
+    
+    return (
+      <div className="slot-machine">
       <div className="image-container">
         <img src={cocoRicoImage} alt="Coco Rico" />
       </div>
-      <div className="reel-container">
-        <div className="top"></div>
-        <div className="middle"></div>
-        <div className="bottom"></div>
-        <div className="reel" ref={reelRef}>
-          {reelItems.map((item, index) => (
-            <div key={index} className="reel-item">{item}</div>
-          ))}
+        <div className="reel-container">
+          <div className="top"></div>
+          <div className="middle"></div>
+          <div className="bottom"></div>
+          <div className="reel" ref={reelRef}>
+            {reelItems.map((item, index) => (
+              <div key={index} className="reel-item">{item}</div>
+            ))}
+          </div>
+        </div>
+        <button onClick={spinReel} disabled={isRolling || !canSpin}>スロットスタート</button>
+        <div className="result">
+          {result && (
+            <div>
+              {result === '¥500 OFF' && (
+                <div>
+                  <p>おめでとうございます</p>
+                  <p>クーポンコード <span style={{ color: 'red' }}>000000</span></p>
+                </div>
+              )}
+              {result === '¥1000 OFF' && (
+                <div>
+                  <p>おめでとうございます</p>
+                  <p>クーポンコード <span style={{ color: 'red' }}>111111</span></p>
+                </div>
+              )}
+              {result === 'ハズレ' && <p>残念！また明日チャレンジしてね</p>}
+            </div>
+          )}
+        </div>
+        <div className="time-remaining">
+          {timeRemaining && <p>{timeRemaining}</p>}
         </div>
       </div>
-      <button onClick={spinReel} disabled={isRolling || !canSpin}>スロットスタート</button>
-      <div className="result">
-        {result && (
-          <div>
-            {result === '¥500 OFF' && (
-              <div>
-                <p>おめでとうございます</p>
-                <p>クーポンコード <span style={{ color: 'red' }}>000000</span></p>
-              </div>
-            )}
-            {result === '¥1000 OFF' && (
-              <div>
-                <p>おめでとうございます</p>
-                <p>クーポンコード <span style={{ color: 'red' }}>111111</span></p>
-              </div>
-            )}
-            {result === 'ハズレ' && <p>残念！また明日チャレンジしてね</p>}
-          </div>
-        )}
-      </div>
-      <div className="time-remaining">
-        {timeRemaining && <p>{timeRemaining}</p>}
-      </div>
-    </div>
-  );
-};
-
-export default SlotMachine;
+    );
+  };
+  
+  export default SlotMachine;
