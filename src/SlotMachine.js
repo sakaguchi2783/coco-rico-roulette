@@ -65,6 +65,33 @@ const SlotMachine = () => {
     };
 
     insertUser();
+
+    // 1日1回の制限を確認
+    const checkLastSpin = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('spin_results')
+          .select('*')
+          .eq('user_id', storedUserId)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (error) throw error;
+
+        if (data.length > 0) {
+          const lastSpinTime = new Date(data[0].created_at);
+          const now = new Date();
+          if (now.toDateString() === lastSpinTime.toDateString()) {
+            setCanSpin(false);
+            setTimeRemaining('今日のチャレンジはもう完了しました！');
+          }
+        }
+      } catch (error) {
+        console.error('Error checking last spin:', error.message);
+      }
+    };
+
+    checkLastSpin();
   }, [userId]);
 
   useEffect(() => {
@@ -101,7 +128,7 @@ const SlotMachine = () => {
     const spinDuration = 3000;
 
     // 固定の停止位置を設定（例: 常に最後の「ハズレ」）
-    const targetIndex = 23; // 例: 常に reelItems[15] の位置に止まる
+    const targetIndex = 23; // 例: 常に reelItems[23] の位置に止まる
     const itemHeight = reelRef.current.firstChild.clientHeight;
     const stopPosition = targetIndex * -itemHeight;
 
