@@ -12,28 +12,18 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 const reelItems = [
   '¥1000 OFF', '¥500 OFF', 'ハズレ', 'もう1回',
   'ハズレ', '¥500 OFF', 'ハズレ', 'もう1回',
-  '¥500 OFF', 'ハズレ', '¥500 OFF', 'もう1回',
-  'ハズレ', '¥500 OFF', 'ハズレ', 'もう1回',
-  'ハズレ', 'もう1回', 'ハズレ', '¥1000 OFF',
-  'ハズレ', '¥1000 OFF', '¥500 OFF', 'ハズレ',//←止まる場所
+  '¥500 OFF', 'ハズレ', '¥500 OFF', 'もう1回',//7,8,9,10
+  'ハズレ', '¥500 OFF', 'ハズレ', 'もう1回',//11,12,13,14
+  'ハズレ', 'もう1回', 'ハズレ', '¥1000 OFF',//15.16.17.18
+  'ハズレ', '¥1000 OFF', '¥500 OFF', 'ハズレ',//19,20,21,22
+  'ハズレ', '¥1000 OFF', 'ハズレ', 'もう1回',//23,24,25,26
+  '¥1000 OFF', '¥500 OFF', 'ハズレ', 'もう1回',//27.28,29,30
+  'ハズレ', '¥500 OFF', 'ハズレ', 'もう1回',//31,32,33,34
+  '¥500 OFF', 'ハズレ', '¥500 OFF', 'もう1回',//35.36.37.38
+  'ハズレ', '¥500 OFF', 'ハズレ', 'もう1回',//39,40,41,42
+  'ハズレ', 'もう1回', 'ハズレ', '¥1000 OFF',//43,44,45,46
+  'ハズレ', '¥1000 OFF', '¥500 OFF', 'ハズレ',//47,48,49,50
   'ハズレ', '¥1000 OFF', 'ハズレ', 'もう1回',
-  'ハズレ', 'もう1回', 'ハズレ', 'もう1回',
-  'ハズレ', '¥500 OFF', 'ハズレ', 'ハズレ',
-  'ハズレ', 'ハズレ', 'ハズレ', 'もう1回',
-  'ハズレ', 'もう1回', 'ハズレ', '¥1000 OFF',
-  'ハズレ', '¥500 OFF', 'ハズレ', 'もう1回',
-  'ハズレ', 'もう1回', 'ハズレ', 'ハズレ',
-  'ハズレ', '¥500 OFF', 'ハズレ', 'もう1回',
-  'ハズレ', 'もう1回', 'ハズレ', 'もう1回',
-  'ハズレ', 'ハズレ', 'ハズレ', 'もう1回',
-  'ハズレ', 'ハズレ', 'ハズレ', 'もう1回',
-  'ハズレ', 'もう1回', 'ハズレ', '¥1000 OFF',
-  'ハズレ', '¥500 OFF', 'ハズレ', 'もう1回',
-  'ハズレ', 'もう1回', 'ハズレ', 'もう1回',
-  'ハズレ', '¥500 OFF', 'ハズレ', 'もう1回',
-  'ハズレ', 'もう1回', 'ハズレ', 'もう1回',
-  'ハズレ', 'ハズレ', 'ハズレ','ハズレ', 
-  'ハズレ', 'ハズレ', 'もう1回',
 ];
 
 const SlotMachine = () => {
@@ -65,33 +55,35 @@ const SlotMachine = () => {
     };
 
     insertUser();
+//1日1回の制限コード
 
-    // 1日1回の制限を確認
-    const checkLastSpin = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('spin_results')
-          .select('*')
-          .eq('user_id', storedUserId)
-          .order('created_at', { ascending: false })
-          .limit(1);
+const checkLastSpin = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('spin_results')
+      .select('*')
+      .eq('user_id', storedUserId)
+      .order('created_at', { ascending: false })
+      .limit(1);
 
-        if (error) throw error;
+    if (error) throw error;
 
-        if (data.length > 0) {
-          const lastSpinTime = new Date(data[0].created_at);
-          const now = new Date();
-          if (now.toDateString() === lastSpinTime.toDateString()) {
-            setCanSpin(false);
-            setTimeRemaining('今日のチャレンジはもう完了しました！');
-          }
-        }
-      } catch (error) {
-        console.error('Error checking last spin:', error.message);
+    if (data.length > 0) {
+      const lastSpinTime = new Date(data[0].created_at);
+      const now = new Date();
+      if (now.toDateString() === lastSpinTime.toDateString()) {
+        setCanSpin(false);
+        setTimeRemaining('今日のチャレンジはもう完了しました！');
       }
-    };
+    }
+  } catch (error) {
+    console.error('Error checking last spin:', error.message);
+  }
+};
 
-    checkLastSpin();
+checkLastSpin();
+
+
   }, [userId]);
 
   useEffect(() => {
@@ -124,11 +116,11 @@ const SlotMachine = () => {
     setIsRolling(true);
     setResult('');
 
-    // 回転時間を固定 (3秒)
-    const spinDuration = 3000;
+    // 回転時間を固定 (4秒)
+    const spinDuration = 4000;
 
     // 固定の停止位置を設定（例: 常に最後の「ハズレ」）
-    const targetIndex = 23; // 例: 常に reelItems[23] の位置に止まる
+    const targetIndex = 41; // 例: 常に reelItems[23] の位置に止まる
     const itemHeight = reelRef.current.firstChild.clientHeight;
     const stopPosition = targetIndex * -itemHeight;
 
@@ -138,7 +130,9 @@ const SlotMachine = () => {
 
     // 回転が終わった後に結果を決定
     setTimeout(async () => {
-      const finalResult = reelItems[targetIndex];
+      // インデックスを２つ前にずらすことで、丁度、真ん中に止まる（笑）
+      const adjustedIndex = (targetIndex +1 + reelItems.length) % reelItems.length;
+      const finalResult = reelItems[adjustedIndex];
       setResult(finalResult);
 
       // データベースへの結果の保存
