@@ -10,7 +10,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 // リールのアイテム
 const reelItems = [
-  '¥1000 OFF', '¥500 OFF', 'ハズレ', 'もう1回',
+  '¥500 OFF', '¥1000 OFF', 'ハズレ', 'もう1回',
   'ハズレ', '¥500 OFF', 'ハズレ', 'もう1回',
   '¥500 OFF', 'ハズレ', '¥500 OFF', 'もう1回',//7,8,9,10
   'ハズレ', '¥500 OFF', 'ハズレ', 'もう1回',//11,12,13,14
